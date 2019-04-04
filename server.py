@@ -42,15 +42,98 @@ DATABASEURI = "postgresql://hr2461:4111@34.73.21.127/proj1part2"
 #
 engine = create_engine(DATABASEURI)
 
-#
-# Example of running queries in your database
-# Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
-#
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
+#Create table Genres
+engine.execute("""CREATE TABLE IF NOT EXISTS Genres (
+  Genre_ID CHAR(20),
+  Genre_Name text,
+  Description text,
+  PRIMARY KEY (Genre_ID)
 );""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+#Insert Values into table Genres
+#engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+
+#Create table Band
+engine.execute("""CREATE TABLE IF NOT EXISTS Band (
+Band_ID CHAR(20),
+Band_Name text,
+Description text,
+PRIMARY KEY (Band_ID)
+);""")
+#Insert Values into table Band
+#engine.execute("""INSERT INTO Band VALUES ;""")
+
+#Create table Artist
+engine.execute("""CREATE TABLE IF NOT EXISTS Artist (
+Artist_ID CHAR(20),
+Artist_Name text,
+Years Date,
+Band_ID CHAR(20) NOT NULL,
+PRIMARY KEY (Artist_ID),
+FOREIGN KEY (Band_ID) 
+REFERENCES Band
+);""")
+#Insert values into table Artist
+#engine.execute("""INSERT INTO Artist VALUES ;""")
+
+#Create table Composer
+engine.execute("""CREATE TABLE IF NOT EXISTS Composer (
+Composer_ID CHAR(20),
+Artist_ID CHAR(20),
+PRIMARY KEY (Composer_ID),
+FOREIGN KEY (Artist_ID)
+REFERENCES Artist
+);""")
+#Insert values into table Composer
+#engine.execute("""INSERT INTO Composer VALUES ;""")
+
+#Create table Singer
+engine.execute("""CREATE TABLE IF NOT EXISTS Singer (
+Singer_ID CHAR(20),
+Artist_ID CHAR(20),
+PRIMARY KEY (Singer_ID),
+FOREIGN KEY (Artist_ID)
+REFERENCES Artist
+);""")
+#Insert values into table Composer
+#engine.execute("""INSERT INTO Singer VALUES ;""")
+
+#Create table Albums
+engine.execute("""CREATE TABLE IF NOT EXISTS Albums (
+Album_ID CHAR(20),
+Artist_ID CHAR(20) NOT NULL,
+Album_Name CHAR(20),
+Release_Date DATE,
+PRIMARY KEY (Album_ID),
+FOREIGN KEY (Artist_ID)
+REFERENCES Artist
+);""")
+#Insert values into table Albums
+#engine.execute("""INSERT INTO Composer VALUES ;""")
+
+#Create table Tracks
+engine.execute("""CREATE TABLE IF NOT EXISTS Tracks (
+Track_ID CHAR(20),
+Track_Name CHAR(20),
+Lyric text,
+Frequency_heard INT,
+Play_time_in_seconds INT,
+Album_ID CHAR(20) NOT NULL,
+Genre_ID CHAR(20) NOT NULL,
+Composer_ID CHAR(20),
+Singer_ID CHAR(20),
+PRIMARY KEY (Track_ID),
+FOREIGN KEY (Album_ID)
+REFERENCES Albums,
+FOREIGN KEY (Genre_ID)
+REFERENCES Genres,
+FOREIGN KEY (Composer_ID)
+REFERENCES Composer,
+FOREIGN KEY (Singer_ID)
+REFERENCES Singer
+);""")
+#Insert values into table Tracks
+#engine.execute("""INSERT INTO Tracks VALUES ;""")
+
 
 
 @app.before_request
