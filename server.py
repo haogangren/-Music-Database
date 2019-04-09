@@ -17,7 +17,7 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, jsonify
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -41,9 +41,6 @@ DATABASEURI = "postgresql://hr2461:4111@34.73.21.127/proj1part2"
 # This line creates a database engine that knows how to connect to the URI above.
 #
 engine = create_engine(DATABASEURI)
-
-
-
 
 
 @app.before_request
@@ -88,7 +85,7 @@ def teardown_request(exception):
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
 @app.route('/')
-def index():
+def musicDB():
   """
   request is a special object that Flask provides to access web request information:
 
@@ -100,73 +97,91 @@ def index():
   """
 
   # DEBUG: this is debugging code to see what request looks like
-  print request.args
+#  print request.args
+#  
+#  search = MusicSearchForm(request.form)
+#  if request.method == 'POST':
+#     return search_results(search
+  tables = ["Artist", "Album", "Band", "Composer", "Singer", "Tracks","Genres"]
+  return render_template("musicDB.html", tables = tables)
+  
+tableColumns = {
+    "Artist": ["Artist_ID", "Artist_Name","Years","Band_ID"],
+    "Album" : ["Album_ID", "Artist_ID", "Album_Name", "Release_Date"],
+    "Band" : ["Band_ID", "Band_Name", "Description"],
+    "Composer" : ["Composer_ID", "Instrument"],
+    "Singer" : ["Singer_ID", "Voicelevel"],
+    "Tracks" : ["Track_ID", "Track_Name", "Lyric", "Frequency_heard", "Play_time_in_seconds","Album_ID", "Genre_ID", "Composer_ID", "Singer_ID"],
+    "Genres" : ["Genre_ID", "Genre_Name", "Description"]
+}
+
+@app.route('/getForm', methods = ["GET"])
+def getForm():
+    table = request.args.get('table')
+    fields = tableColumns[table]
+    deleteFields = [fields[0]]
+    return render_template("actions.html", table = table, fields = fields, deleteFields = deleteFields)
+
+@app.route('/search',methods = ['POST'])
+def search():
+    table = request.form['table']
+    field = tableColumns[table][0]
+    value = request.form[field]
+    query = "Select " + "*" + " from " + table + " where " + field + " = %s"
+    resultProxy = g.conn.execute(query,value)
+    results = []
+    for rowProxy in resultProxy:
+        data = {}
+        for column, value in rowProxy.items():
+            data[column] = value
+        results.append(data)
+    print results
+    return render_template("results.html", results = results)
+        
+    
 
 
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("select T.Track_name from Tracks T, Genres G where T.Genre_ID = G.Genre_ID and G.Genre_Name = 'Rock'")
-  names = []
-  for result in cursor:
-    names.append(result[0])  # can also be accessed using result[0]
-  cursor.close()
+@app.route('/create', methods=["POST"])
+def create():
+    table = request.form['table']
+    fields = tableColumns[table]
+    values = []
+    for field in fields:
+        values.append(request.form[field])
+    query = "INSERT INTO " + table + " VALUES (" + ','.join(['%s']*len(fields)) + ")"
+    g.conn.execute(query, values)
+    
+    return redirect('/')
+            
 
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
+@app.route('/update',methods=['POST'])
+def update():
+    table = request.form['table']
+    fields = tableColumns[table]
+    fieldsRequiringSet = []
+    values = []
+    for field in fields:
+        if field != fields[0]:
+            fieldsRequiringSet.append(field)
+            values.append(request.form[field])
+    query = "UPDATE " + table + " SET" + " (" + ", ".join(fieldsRequiringSet) + ")" + " = (" + ','.join(['%s']*(len(fieldsRequiringSet))) + ")" + " WHERE " + fields[0] + " = %s"
+    values.append(request.form[fields[0]])
+    print query
+    print values
+    g.conn.execute(query, values)
+    return redirect('/')
+    
 
+@app.route('/delete',methods = ['POST'])
+def delete():
+    table = request.form['table']
+    field = tableColumns[table][0]
+    value = request.form[field]
+    query = "DELETE FROM " + table + " WHERE " + field + " = %s"
+    print query
+    g.conn.execute(query, value)
+    return redirect('/')
 
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
-
-#
-# This is an example of a different path.  You can see it at:
-# 
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("another.html")
-
-
-
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test VALUES (NULL, ?)', name)
-  return redirect('/')
 
 
 @app.route('/login')
