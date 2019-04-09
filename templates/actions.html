@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MusicDB Actions</title>
+</head>
+<body>
+	Actions for {{table}}
+	<form action="/search" method = "post">
+		<input type="text" name="table" value={{table}} style="display: none"/><br>
+		{% for field in deleteFields %}
+			{{ field }}: <input type="text" name="{{field}}" /><br> 
+		{% endfor %}
+		<input type="submit" value="Search"/> 
+	</form>
+	<br>
+	<br>
+	<form action="/create" method = "post">
+		<input type="text" name="table" value={{table}} style="display: none"/><br>
+		{% for field in fields %}
+			{{ field }}: <input type="text" name="{{field}}" /><br> 
+		{% endfor %}
+		<input type="submit" value="Create"/> 
+	</form>
+	<br>
+	<br>
+	<form action="/update" method = "post">
+		<input type="text" name="table" value={{table}} style="display: none"/> <br>
+		{% for field in fields %}
+			{{ field }} <input type="text" name="{{field}}" /><br>
+		{% endfor %}
+		<input type="submit" value="Update"/> 
+	</form>
+	<br>
+	<br>
+	<form action="/delete" method = "post">
+		<input type="text" name="table" value={{table}} style="display: none"/> <br>
+		{% for field in deleteFields %}
+			{{ field }} <input type="text" name="{{field}}" /><br>
+		{% endfor %}
+		<input type="submit" value="Delete"/> 
+	</form>
+</body>
+</html>

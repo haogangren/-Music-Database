@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Database</title>
+</head>
+<body>
+	<div id="mainContainer" style="width: 100%; text-align: center;">
+		<h2 style="margin: auto;">Music Database</h2>
+		{% for table in tables %}
+			<a href="getForm?table={{table}}" style="margin: auto;">{{table}}</a>
+		{% endfor %}
+	</div>
+</body>
+</html>
